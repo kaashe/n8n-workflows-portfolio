@@ -1,0 +1,286 @@
+{
+  "name": "Order Risk Classification Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "46a0d9a5-dcbf-4a57-a7b4-5a00fe8c69c0",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -368,
+        -96
+      ],
+      "id": "22e54be1-82a5-474c-8bd0-f1477cf97fe9",
+      "name": "Webhook",
+      "webhookId": "46a0d9a5-dcbf-4a57-a7b4-5a00fe8c69c0"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const data = item.json.body;\n\n  const total = data.items.reduce((sum, product) => {\n    return sum + (product.price * product.qty);\n  }, 0);\n\n  return {\n    json: {\n      orderId: data.orderId,\n      customerName: data.customer.name,\n      customerEmail: data.customer.email,\n      country: data.customer.country,\n      paymentMethod: data.paymentMethod,\n      items: data.items,\n      totalAmount: total\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        -96
+      ],
+      "id": "63b3a986-be3b-4bd9-a9ed-6b541d17c009",
+      "name": "Normalize Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items?.map((item) => {\n  const total = item.json.totalAmount;\n  const payment = item.json.paymentMethod;\n  let priority;\n\n  switch (true) {\n    case payment === \"COD\" && total > 1000:\n      priority = \"High Risk\";\n      break;\n\n    case total > 1200:\n      priority = \"High Value\";\n      break;\n    default:\n      priority = \"NORMAL\";\n  }\n\n  return {\n      ...item.json,\n      priority: priority,\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        -96
+      ],
+      "id": "3dd65734-ce4a-4bdd-a681-6c56a4ada499",
+      "name": "Classification"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "484c70e0-cadb-4439-809a-a976e3ffe508",
+              "leftValue": "={{ $json.priority }}",
+              "rightValue": "High Risk",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "3b6d9926-1b31-4441-b6c1-35dbd5eec6b0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "12caf83e-ebf5-4039-b616-d2d60454012b",
+              "name": "action",
+              "value": "Send to Manual Review Team",
+              "type": "string"
+            },
+            {
+              "id": "b322585f-3f53-489e-aa8b-06f055a380b7",
+              "name": "flagColor",
+              "value": "Red",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        528,
+        -272
+      ],
+      "id": "e73777d1-ff2d-46e5-8660-543818cdff90",
+      "name": "High Risk"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "990ecc02-bb7a-4c9b-9d51-16f418b0830b",
+              "leftValue": "={{ $json.priority }}",
+              "rightValue": "=High Value",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        528,
+        96
+      ],
+      "id": "dd7195e7-efdd-43b0-9d11-3f9eb87a19fe",
+      "name": "High Value?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "184fe86a-c18e-4251-bd44-199f3ab9a98e",
+              "name": "Order",
+              "value": "Fast Track",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1008,
+        48
+      ],
+      "id": "b75af189-20cd-4bd1-89c6-211f7759af31",
+      "name": "Fast Track"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2f5d333d-732f-49ea-9a57-7008e3685771",
+              "name": "order",
+              "value": "Standard Processing",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1008,
+        256
+      ],
+      "id": "a752a8b9-d47d-405a-91b4-ad67fb89687d",
+      "name": "Standard Processing"
+    }
+  ],
+  "pinData": {
+    "High Risk": [
+      {
+        "json": {
+          "action": "Send to Manual Review Team",
+          "flagColor": "Red"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Data": {
+      "main": [
+        [
+          {
+            "node": "Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classification": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "High Risk",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "High Value?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "High Value?": {
+      "main": [
+        [
+          {
+            "node": "Fast Track",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Standard Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "9b002699-4b29-4588-aa8a-92259ffcf96f",
+  "meta": {
+    "instanceId": "42b194d60262ed5aead1f4b26f24f634d4e383e89bbe3d6462d7d6039e180b67"
+  },
+  "id": "gFNjOxatHE7dN5Jf",
+  "tags": []
+}

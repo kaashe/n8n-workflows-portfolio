@@ -1,0 +1,155 @@
+{
+  "name": "saloon booking -virtual assistan",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fcec824d-b18f-4b2c-86e8-19c4930f33c6",
+      "name": "When chat message received",
+      "webhookId": "81337262-9124-4dee-ba56-919f00b9eb01"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "#Role\nyou are a scheduling assistant working in a beauty salon. your role is to help customer schedule an appointment in the beauty salon's calendar.\n#instructions\nfollow the follwing steps to book an appointment for the user.\n1.  ask the user for thier preffered appointment day.\n2. use the check_calendar_availibility tool to identify free time slots for the user-specified day.\n3. show the user availible time slots for thier preffered day and get from user the time slot they would like to book an appointment for. If there are no availible time slots for that day, start from step 1 again and ask the user for a new day preference.\n4. ask the user for the information you require to book the calendar appointment. in order to book the appointment, you need the user's full name and email.\n5. use the create_calendar_appointment tool to book the appointment for the user, using details captured from step 4.\n6. once the appointment is booked, notify the user with relevant details for thier appointment. notify user if it was not possible to create the appointment.\n#rules\n- always use local time zone when using tools or thier outputs.\n-  don't make things up, ask the user a clarifying question if you need additional information to complete your task.\n#example\nuse the following example to notify the user when you have succesfuly booked thier appointment:\n<example>\nI have succesfuly booked your appointment, here are the details:\n** date and time **: 15:30 on moday 13 2025\n**email for booking**: jane@gmail.com\nif you wana cancel the appointment please call on 1111-1111-11111\n</example>\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "eadbd60a-4c5c-4826-961c-934416f7820e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "use this check_calendar_availibility  tool to fetch exisitng appointments for a specified period and determine when there are availible time slots that can accomodate a new appointment.\n#instructions\n1. specify the date and range - to fetch events for a specific day, set eventsAfter to 8:59 of that day and eventsbefore to 18:01 of the same day (adjust these times if needed).\n2. retrieve existing appointments - the tool will return all booked appointments within the specified date and time range.\n3. calculate availible slots - once you have potential availibility. ensure each gap is at least as long as the required appointment length. do not allow any overlap with existing appointments.\n",
+        "calendar": {
+          "__rl": true,
+          "value": "kashifullah.dev@gmail.com",
+          "mode": "list",
+          "cachedResultName": "kashifullah.dev@gmail.com"
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        368,
+        208
+      ],
+      "id": "2c81e762-b355-414e-ac38-8b4782cc28a8",
+      "name": "check_calendar_availibility",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "9w2KyxhmACGJPdmA",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        208
+      ],
+      "id": "cbcb4ec5-5a55-4791-8f16-d16bed5f3a32",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        208
+      ],
+      "id": "d73b99ce-3fe4-46ae-a9eb-7f5b6d35283c",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "0rshjCaBmX8R8Jaz",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "check_calendar_availibility": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5518bf69-90ec-478a-ac23-f666783288ab",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d0d0fd136349ef42b5ef8f3303011aec8311b2cb5ee421d1d9b850b69395736c"
+  },
+  "id": "nLEC2gZiMwzM1cfq",
+  "tags": []
+}

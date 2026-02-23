@@ -1,0 +1,920 @@
+{
+  "name": "Medical Call Agent – AI-Powered Insurance Claim Status Inquiry",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "start-call",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS, PUT, PATCH, DELETE"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "X-Requested-With, Content-Type, Authorization"
+              },
+              {
+                "name": "Access-Control-Allow-Credentials",
+                "value": "true"
+              }
+            ]
+          }
+        }
+      },
+      "id": "c7540b18-1d3f-4b80-855d-21e3bd1258ef",
+      "name": "Start Call Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        2096
+      ],
+      "webhookId": "start-call-webhook-id"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "phoneNumber",
+              "value": "={{ $json.body.phoneNumber }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "callMode",
+              "value": "={{ $json.body.callMode || 'human' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "startTimestamp",
+              "value": "={{ $json.body.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "callerSessionId",
+              "value": "={{ $json.body.sessionId || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "callerId",
+              "value": "={{ $json.body.callerId || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e6aecd52-0b70-4c28-a319-66055b7fd519",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        2096
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ultravox.ai/api/calls",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "O1M8UO2p.sdIFZlinq6M1nsUj1Kn4J8piA9xHba6z"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"voice\": \"e6fce4ac-da54-43e9-8fb2-66de86f72a5b\",\n  \"medium\": {\n    \"plivo\": {}\n  },\n  \"systemPrompt\": \"You are an AI assistant calling on behalf of a patient to check insurance claim status. When the insurance company person answers, greet them professionally and say: 'Hello, I am calling to inquire about the status of claim ID 1122 for patient Kashif Khan.' Wait for their response and answer any questions they have about the claim. Be polite, professional, and provide the claim information when asked. Keep responses brief and clear.\",\n  \"metadata\": {\n    \"callMode\": \"{{ $('Workflow Configuration').first().json.callMode }}\",\n    \"phoneNumber\": \"{{ $('Workflow Configuration').first().json.phoneNumber }}\",\n    \"sessionId\": \"{{ $('Workflow Configuration').first().json.callerSessionId }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "6b7f8b19-dc2b-4598-837c-4749296e179a",
+      "name": "Create UltraVox Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1136,
+        2096
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "hGg0O0AlCvdTr6jJ",
+          "name": "Unnamed credential 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "ultraVoxCallId",
+              "value": "={{ $json.callId }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "joinUrl",
+              "value": "={{ $json.joinUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "answerUrl",
+              "value": "=https://voice-agent.app.n8n.cloud/webhook/plivo-answer?joinUrl={{ encodeURIComponent($json.joinUrl) }}&ultraVoxCallId={{ $json.callId }}&phoneNumber={{ $('Workflow Configuration').first().json.phoneNumber }}&callMode={{ $('Workflow Configuration').first().json.callMode }}&callerId={{ $('Workflow Configuration').first().json.callerId }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "ultraVoxCallDetails",
+              "value": "={{ $json }}",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "237d445d-6a8a-4733-ab63-473af14b9033",
+      "name": "Extract UltraVox Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        2096
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.plivo.com/v1/Account/MAMDDLOTE1M2Q3YJRHYM/Call/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"+16238875225\",\n  \"to\": \"{{ $('Workflow Configuration').first().json.phoneNumber }}\",\n  \"answer_url\": \"{{ $json.answerUrl }}\",\n  \"answer_method\": \"POST\",\n  \"hangup_url\": \"https://voice-agent.app.n8n.cloud/webhook/call-hangup?ultraVoxCallId={{ $json.ultraVoxCallId }}&phoneNumber={{ $('Workflow Configuration').first().json.phoneNumber }}&callMode={{ $('Workflow Configuration').first().json.callMode }}&callerId={{ $('Workflow Configuration').first().json.callerId }}\",\n  \"hangup_method\": \"POST\",\n  \"caller_name\": \"Medical Assistant\",\n  \"time_limit\": 3600,\n  \"record\": true,\n  \"record_file_format\": \"mp3\",\n  \"transcription_type\": \"auto\",\n  \"transcription_url\": \"https://voice-agent.app.n8n.cloud/webhook/transcription-complete\",\n  \"callback_url\": \"https://voice-agent.app.n8n.cloud/webhook/call-status-update\"\n}",
+        "options": {}
+      },
+      "id": "81809014-8552-4777-8c59-c648b5612487",
+      "name": "Make Plivo Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1584,
+        2096
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "bcNonDZLNB3S1gJk",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Call initiated successfully\",\n  \"callDetails\": {\n    \"ultraVoxCallId\": \"{{ $('Extract UltraVox Details').first().json.ultraVoxCallId }}\",\n    \"phoneNumber\": \"{{ $('Workflow Configuration').first().json.phoneNumber }}\",\n    \"callMode\": \"{{ $('Workflow Configuration').first().json.callMode }}\",\n    \"startTime\": \"{{ $('Workflow Configuration').first().json.startTimestamp }}\",\n    \"callerId\": \"{{ $('Workflow Configuration').first().json.callerId }}\"\n  },\n  \"timestamp\": \"{{ new Date().toISOString() }}\"\n}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              }
+            ]
+          }
+        }
+      },
+      "id": "89bc3c2b-db72-409f-a04b-de8af829011f",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1808,
+        2096
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "plivo-answer",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "ed308f0f-ba73-459b-93b4-1a8be2802024",
+      "name": "Answer URL Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        2320
+      ],
+      "webhookId": "answer-url-webhook-id"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "ultraVoxCallId",
+              "value": "={{ $json.query.ultraVoxCallId }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "joinUrl",
+              "value": "={{ $json.query.joinUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "phoneNumber",
+              "value": "={{ $json.query.phoneNumber }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "callMode",
+              "value": "={{ $json.query.callMode }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "callAnsweredTime",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "id": "id-6",
+              "name": "callerId",
+              "value": "={{ $json.query.callerId }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "de2ce717-7fce-4a28-9740-da02e14fc913",
+      "name": "Extract Answer Details",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        2320
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n  <Speak voice=\"MAN\" language=\"en-US\">Connecting your call now.</Speak>\n  <Stream keepCallAlive=\"true\" bidirectional=\"true\" audioTrack=\"inbound\" contentType=\"audio/x-l16;rate=16000\">{{ $json.joinUrl }}</Stream>\n</Response>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/xml"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f0843fa2-3a5d-4206-bcb2-5b7c47fb2e54",
+      "name": "Return XML to Plivo",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1136,
+        2320
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "call-hangup",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "535e0c69-88c5-4681-9a0a-1173d909ce15",
+      "name": "Call Hangup Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        3088
+      ],
+      "webhookId": "call-hangup-webhook-id"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "plivoCallUUID",
+              "value": "={{ $json.body.CallUUID || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "ultraVoxCallId",
+              "value": "={{ $json.query.ultraVoxCallId || $json.body.ultraVoxCallId || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "phoneNumber",
+              "value": "={{ $json.query.phoneNumber || $json.body.phoneNumber || $json.body.To || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "callMode",
+              "value": "={{ $json.query.callMode || $json.body.callMode || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "callDuration",
+              "value": "={{ $json.body.duration || \"0\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-6",
+              "name": "callStatus",
+              "value": "={{ $json.body.CallStatus || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-7",
+              "name": "totalCost",
+              "value": "={{ $json.body.TotalCost || \"0.00000\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-8",
+              "name": "hangupCause",
+              "value": "={{ $json.body.HangupCause || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-9",
+              "name": "startTime",
+              "value": "={{ $json.body.StartTime || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-10",
+              "name": "endTime",
+              "value": "={{ $json.body.EndTime || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-11",
+              "name": "callerId",
+              "value": "={{ $json.query.callerId || $json.body.callerId || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-12",
+              "name": "recordingUrl",
+              "value": "={{ $json.body.RecordingUrl || $json.body.recording_url || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-13",
+              "name": "completeCallData",
+              "value": "={{ $json.body }}",
+              "type": "object"
+            },
+            {
+              "id": "id-14",
+              "name": "billDuration",
+              "value": "={{ $json.body.BillDuration || \"0\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-15",
+              "name": "billRate",
+              "value": "={{ $json.body.BillRate || \"0.000\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-16",
+              "name": "direction",
+              "value": "={{ $json.body.Direction || \"outbound\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-17",
+              "name": "fromNumber",
+              "value": "={{ $json.body.From || \"+16238875225\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-18",
+              "name": "hangupSource",
+              "value": "={{ $json.body.HangupSource || \"unknown\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-19",
+              "name": "parentAuthID",
+              "value": "={{ $json.body.ParentAuthID || \"MAMDDLOTE1M2Q3YJRHYM\" }}",
+              "type": "string"
+            },
+            {
+              "id": "id-20",
+              "name": "recordingId",
+              "value": "={{ $json.body.RecordingId || \"\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "6dc04784-c2bd-4d61-b436-10e90cea15bc",
+      "name": "Extract Hangup Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        3184
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Call termination processed\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"callSummary\": {\n    \"plivoCallUUID\": \"{{ $('Extract Hangup Data').first().json.plivoCallUUID }}\",\n    \"ultraVoxCallId\": \"{{ $('Extract Hangup Data').first().json.ultraVoxCallId }}\",\n    \"phoneNumber\": \"{{ $('Extract Hangup Data').first().json.phoneNumber }}\",\n    \"callMode\": \"{{ $('Extract Hangup Data').first().json.callMode }}\",\n    \"callDuration\": \"{{ $('Extract Hangup Data').first().json.callDuration }}\",\n    \"callStatus\": \"{{ $('Extract Hangup Data').first().json.callStatus }}\",\n    \"totalCost\": \"{{ $('Extract Hangup Data').first().json.totalCost }}\",\n    \"hangupCause\": \"{{ $('Extract Hangup Data').first().json.hangupCause }}\",\n    \"startTime\": \"{{ $('Extract Hangup Data').first().json.startTime }}\",\n    \"endTime\": \"{{ $('Extract Hangup Data').first().json.endTime }}\",\n    \"callerId\": \"{{ $('Extract Hangup Data').first().json.callerId }}\",\n    \"recordingUrl\": \"{{ $('Extract Hangup Data').first().json.recordingUrl }}\"\n  },\n  \"ultraVoxMessages\": {{ JSON.stringify($('Get Ultravox Call Data').first().json) }},\n  \"completeCallData\": {{ JSON.stringify($('Extract Hangup Data').first().json.completeCallData) }},\n  \"systemInfo\": {\n    \"workflowId\": \"medical-call-agent\",\n    \"processedAt\": \"{{ new Date().toISOString() }}\",\n    \"callResult\": \"{{ $('Extract Hangup Data').first().json.callStatus == 'busy' ? 'Busy Line' : 'Completed' }}\"\n  }\n}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "6de84bcf-46e4-4286-9467-44064195c794",
+      "name": "Return Call Details",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1360,
+        3088
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "call-answered",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f750d7bd-8b35-4892-9edb-4cf052019b18",
+      "name": "Call Answered Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        2544
+      ],
+      "webhookId": "call-answered-webhook-id"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Call answered notification received\",\n  \"callUUID\": \"{{ $json[0].body.callUUID }}\",\n  \"phoneNumber\": \"{{ $json[0].body.phoneNumber }}\",\n  \"callMode\": \"{{ $json[0].body.callMode }}\",\n  \"answeredTime\": \"{{ $json[0].body.timestamp }}\",\n  \"status\": \"answered\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\"\n}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "69484b61-3c88-4747-93fe-03c2ca6c8a98",
+      "name": "Respond Call Answered",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        912,
+        2544
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "call-status-update",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "ee81fcdd-724d-45ab-b6c5-c61771c74d93",
+      "name": "Call Status Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        688,
+        2768
+      ],
+      "webhookId": "call-status-webhook-id"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "callUUID",
+              "value": "={{ $json[0].body.CallUUID || $json[0].body.callUUID || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "callStatus",
+              "value": "={{ $json[0].body.CallStatus || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "phoneNumber",
+              "value": "={{ $json[0].body.To || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "recordingUrl",
+              "value": "={{ $json[0].body.RecordingUrl || $json[0].body.recording_url || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "statusData",
+              "value": "={{ $json[0].body }}",
+              "type": "object"
+            },
+            {
+              "id": "id-6",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "ba837877-ac15-49af-8300-08256bac4aee",
+      "name": "Extract Status Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        912,
+        2768
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Call status updated\",\n  \"callUUID\": \"{{ $json.callUUID }}\",\n  \"callStatus\": \"{{ $json.callStatus }}\",\n  \"phoneNumber\": \"{{ $json.phoneNumber }}\",\n  \"recordingUrl\": \"{{ $json.recordingUrl }}\",\n  \"statusData\": {{ JSON.stringify($json.statusData) }},\n  \"timestamp\": \"{{ $json.timestamp }}\",\n  \"workflowId\": \"medical-call-agent\"\n}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "fdfa9600-b0d5-4576-bd8b-ce97f11efddc",
+      "name": "Respond Status Update",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1136,
+        2768
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.ultravox.ai/api/calls/{{ $json.query.ultraVoxCallId || $json.body.ultraVoxCallId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": " X-API-Key",
+              "value": "O1M8UO2p.sdIFZlinq6M1nsUj1Kn4J8piA9xHba6z"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        912,
+        2992
+      ],
+      "id": "9e2cb106-faaf-40d3-8468-c9e70348b166",
+      "name": "Get Ultravox Call Data",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "hGg0O0AlCvdTr6jJ",
+          "name": "Unnamed credential 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "81d7c53e-52af-4260-af81-a8ea6123fdd7",
+      "name": "Merge Call Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1136,
+        3088
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start Call Webhook": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "Create UltraVox Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create UltraVox Call": {
+      "main": [
+        [
+          {
+            "node": "Extract UltraVox Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract UltraVox Details": {
+      "main": [
+        [
+          {
+            "node": "Make Plivo Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make Plivo Call": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Answer URL Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Answer Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Answer Details": {
+      "main": [
+        [
+          {
+            "node": "Return XML to Plivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Hangup Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Hangup Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Ultravox Call Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Answered Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond Call Answered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Status Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Status Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Status Data": {
+      "main": [
+        [
+          {
+            "node": "Respond Status Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Hangup Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Call Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ultravox Call Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Call Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Call Data": {
+      "main": [
+        [
+          {
+            "node": "Return Call Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3725926c-7606-474b-b72e-7b161d285400",
+  "meta": {
+    "instanceId": "d133e09a1ffa08fae21811e0033ebe4cefb28aa6cca68c5908a321488638c134"
+  },
+  "id": "iEEh0Kf2H44Nk1lM",
+  "tags": []
+}
